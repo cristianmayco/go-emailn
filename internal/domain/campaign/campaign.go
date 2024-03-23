@@ -1,6 +1,10 @@
 package campaign
 
-import "time"
+import (
+	"time"
+
+	"github.com/rs/xid"
+)
 
 type Contatc struct {
 	Email string
@@ -22,6 +26,7 @@ func NewCampaign(name string, content string, emails []string) *Campaign {
 	}
 
 	return &Campaign{
+		ID:        xid.New().String(),
 		Name:      name,
 		Content:   content,
 		Contacts:  constatcs,
