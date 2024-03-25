@@ -1,36 +1,24 @@
 package campaign
 
 import (
-	"errors"
 	"time"
 
 	"github.com/rs/xid"
 )
 
 type Contatc struct {
-	Email string
+	Email string `validate:"email"`
 }
 
 type Campaign struct {
-	ID        string
-	Name      string
-	CreatedOn time.Time
-	Content   string
-	Contacts  []Contatc
+	ID        string    `validate:"required"`
+	Name      string    `validate:"min=3,max=24"`
+	CreatedOn time.Time `validate:"required"`
+	Content   string    `validate:"min=5,max=1024"`
+	Contacts  []Contatc `validate:"min=1,dive"`
 }
 
 func NewCampaign(name string, content string, emails []string) (*Campaign, error) {
-	if name == "" {
-		return nil, errors.New("name is required")
-	}
-
-	if content == "" {
-		return nil, errors.New("content is required")
-	}
-
-	if len(emails) == 0 {
-		return nil, errors.New("contacts is required")
-	}
 
 	constatcs := make([]Contatc, len(emails))
 

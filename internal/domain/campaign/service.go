@@ -2,6 +2,7 @@ package campaign
 
 import (
 	"github.com/cristianmayco/go-emailn/internal/contract"
+	internalerros "github.com/cristianmayco/go-emailn/internal/internal_erros"
 )
 
 type Service struct {
@@ -10,9 +11,18 @@ type Service struct {
 
 func (s *Service) Create(newCampaing contract.NewCampaignDTO) (string, error) {
 
-	campaign, _ := NewCampaign(newCampaing.Name, newCampaing.Content, newCampaing.Emails)
+	campaign, err := NewCampaign(newCampaing.Name, newCampaing.Content, newCampaing.Emails)
 
-	s.Repository.Save(campaign)
+	if err != nil {
+		return "", err
+	}
+
+	err = s.Repository.Save(campaign)
+
+	if err != nil {
+		return "", internalerros.ErrInternal
+
+	}
 
 	return campaign.ID, nil
 }

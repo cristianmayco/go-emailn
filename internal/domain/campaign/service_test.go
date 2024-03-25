@@ -1,9 +1,11 @@
 package campaign
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/cristianmayco/go-emailn/internal/contract"
+	internalerros "github.com/cristianmayco/go-emailn/internal/internal_erros"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -17,15 +19,19 @@ func (r *repositoryMock) Save(campaign *Campaign) error {
 	return args.Error(0)
 }
 
-func Test_Create_Campaign(t *testing.T) {
-	assert := assert.New(t)
-
-	service := Service{}
-	newCampaign := contract.NewCampaignDTO{
+var (
+	newCampaign = contract.NewCampaignDTO{
 		Name:    "test",
 		Content: "body",
 		Emails:  []string{"cristian@gmail.com", "cristianteste@gmail.com"},
 	}
+	service = Service{}
+)
+
+func Test_Create_Campaign(t *testing.T) {
+	assert := assert.New(t)
+
+	service := Service{}
 
 	id, err := service.Create(newCampaign)
 
@@ -34,11 +40,6 @@ func Test_Create_Campaign(t *testing.T) {
 }
 
 func Test_Create_SaveCampaign(t *testing.T) {
-	newCampaign := contract.NewCampaignDTO{
-		Name:    "test",
-		Content: "body",
-		Emails:  []string{"cristian@gmail.com", "cristianteste@gmail.com"},
-	}
 	repositoryMock := new(repositoryMock)
 	repositoryMock.On("Save", mock.MatchedBy(func(campaign *Campaign) bool {
 		if campaign.Name != newCampaign.Name ||
@@ -51,12 +52,33 @@ func Test_Create_SaveCampaign(t *testing.T) {
 		return true
 
 	})).Return(nil)
-	service := Service{
-		Repository: repositoryMock,
-	}
 
+	service.Repository = repositoryMock
 	_, _ = service.Create(newCampaign)
 
 	repositoryMock.AssertExpectations(t)
+
+}
+
+func Test_Create_ValidateDomainError(t *testing.T) {
+	assert := assert.New(t)
+	newCampaign.Name = ""
+
+	_, err := service.Create(newCampaign)
+
+	assert.NotNil(err)
+	assert.Equal("name is required", err.Error())
+}
+
+func Test_Create_ValidateRepositorySave(t *testing.T) {
+	assert := assert.New(t)
+
+	repositoryMock := new(repositoryMock)
+	repositoryMock.On("Save", mock.Anything).Return(errors.New("error to save on database"))
+
+	service.Repository = repositoryMock
+	_, err := service.Create(newCampaign)
+
+	assert.True(errors.Is(internalerros.ErrInternal, err))
 
 }
